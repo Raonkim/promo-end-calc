@@ -94,3 +94,26 @@ test('검수 반영: 연도 범위, 빈 값, ics 줄 접기', async () => {
   const long = '가'.repeat(60);
   assert.equal(foldLine(long).replace(/\r\n /g, ''), long);
 });
+
+test('ics에 그날 오전 9시 알람이 들어간다', () => {
+  const ics = buildIcs({ remindDate: d('2026-09-07'), end: d('2026-09-14'), methodLabel: 'x', regularFee: 1, now: new Date('2026-10-11T00:00:00Z') });
+  const lines = ics.replace(/\r\n /g, '').split('\r\n');
+  const i = lines.indexOf('BEGIN:VALARM');
+  assert.ok(i > 0);
+  assert.deepEqual([lines[i + 1], lines[i + 3], lines[i + 4], lines[i + 5]], ['ACTION:DISPLAY', 'TRIGGER;RELATED=START:PT9H', 'END:VALARM', 'END:VEVENT']);
+});
+
+test('알림 문구는 날짜와 요금을 한 줄로', async () => {
+  const { reminderText } = await import('./calc.js');
+  assert.equal(reminderText(d('2026-08-31'), 9900, 33000), '휴대폰 요금 할인이 2026-08-31에 끝날 수 있음. 이후 월 33,000원(지금보다 23,100원 많음). 가입한 회사에 정확한 종료일 확인하기.');
+});
+
+test('알림 기준일은 오늘 이후의 가장 이른 후보', async () => {
+  const { pickReminderEnd } = await import('./calc.js');
+  const ends = [d('2026-10-31'), d('2026-09-30'), d('2026-10-19')];
+  assert.equal(formatDate(pickReminderEnd(ends, d('2026-10-18')).end), '2026-10-19');
+  assert.equal(formatDate(pickReminderEnd(ends, d('2026-10-19')).end), '2026-10-19');
+  assert.equal(formatDate(pickReminderEnd(ends, d('2026-08-01')).end), '2026-09-30');
+  const past = pickReminderEnd(ends, d('2026-11-05'));
+  assert.deepEqual([formatDate(past.end), past.allPast], ['2026-10-31', true]);
+});

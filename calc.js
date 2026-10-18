@@ -123,6 +123,12 @@ export function buildIcs({ remindDate, end, methodLabel, regularFee, now = new D
     `DTEND;VALUE=DATE:${ymd(next)}`,
     `SUMMARY:${esc('휴대폰 요금 할인 종료 확인')}`,
     `DESCRIPTION:${esc(`할인 종료 예정일 ${formatDate(end)} (${methodLabel} 기준 계산). 이후 월 ${regularFee.toLocaleString('ko-KR')}원. 실제 날짜는 계약서·이용약관으로 확인하세요.`)}`,
+    // 종일 일정은 기기 설정에 따라 알림이 안 울릴 수 있어, 그날 오전 9시 알람을 직접 넣는다.
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${esc('휴대폰 요금 할인 종료 확인')}`,
+    'TRIGGER;RELATED=START:PT9H',
+    'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
   ];
@@ -158,4 +164,18 @@ export const YOUTUBE_SPEEDS = [
 
 export function speedCheck(mbps) {
   return YOUTUBE_SPEEDS.map((s) => ({ ...s, ok: mbps >= s.mbps }));
+}
+
+// 달력 파일이 안 열리는 환경(카카오톡 안 등)을 위해 메모·알람 앱에 붙여 넣을 한 줄
+export function reminderText(end, promoFee, regularFee) {
+  const diff = regularFee - promoFee;
+  const more = diff > 0 ? `(지금보다 ${diff.toLocaleString('ko-KR')}원 많음)` : '';
+  return `휴대폰 요금 할인이 ${formatDate(end)}에 끝날 수 있음. 이후 월 ${regularFee.toLocaleString('ko-KR')}원${more}. 가입한 회사에 정확한 종료일 확인하기.`;
+}
+
+// 알림 기준일: 오늘 이후(오늘 포함) 후보 중 가장 이른 날. 모두 지났으면 가장 늦은 날과 함께 allPast를 알린다.
+export function pickReminderEnd(ends, today) {
+  const sorted = [...ends].sort((a, b) => (formatDate(a) < formatDate(b) ? -1 : 1));
+  const upcoming = sorted.find((e) => formatDate(e) >= formatDate(today));
+  return upcoming ? { end: upcoming, allPast: false, earliest: sorted[0] } : { end: sorted[sorted.length - 1], allPast: true, earliest: sorted[0] };
 }

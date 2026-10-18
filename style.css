@@ -32,3 +32,8 @@ th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
 .speeds .no { color: var(--no); }
 a { color: var(--accent); }
 footer { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; font-size: .9rem; }
+.headline { font-size: 1.8rem; font-weight: 800; margin: 8px 0 4px; }
+.warn { background: var(--callout); border-left: 4px solid var(--accent); padding: 10px 12px; border-radius: 8px; font-size: .92rem; }
+.more { margin: 16px 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.more summary { cursor: pointer; font-weight: 600; }
+button.secondary { background: var(--bg); color: var(--fg); border: 1px solid var(--line); }
